@@ -4,10 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>대시보드 - KY 중소기업지원센터</title>
-  <link rel="stylesheet" href="/admin/styles/dashboard.css">
+  <link rel="stylesheet" href="/styles/dashboard.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="/admin/scripts/admin-auth.js"></script>
+  <script src="/scripts/admin-auth.js"></script>
 </head>
 <body>
   <div class="dashboard-container">
@@ -20,7 +20,7 @@
       </div>
 
       <nav class="sidebar-nav">
-        <a href="/admin/" class="nav-item active">
+        <a href="/" class="nav-item active">
           <span class="nav-icon">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <rect x="3" y="3" width="7" height="7"/>
@@ -31,7 +31,7 @@
           </span>
           <span class="nav-text">대시보드</span>
         </a>
-        <a href="/admin/leads" class="nav-item">
+        <a href="/leads" class="nav-item">
           <span class="nav-icon">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/>
@@ -40,7 +40,7 @@
           </span>
           <span class="nav-text">접수내역</span>
         </a>
-        <a href="/admin/board" class="nav-item">
+        <a href="/board" class="nav-item">
           <span class="nav-icon">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
@@ -49,7 +49,7 @@
           </span>
           <span class="nav-text">게시판 관리</span>
         </a>
-        <a href="/admin/analytics" class="nav-item">
+        <a href="/analytics" class="nav-item">
           <span class="nav-icon">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <line x1="18" y1="20" x2="18" y2="10"/>
@@ -59,7 +59,7 @@
           </span>
           <span class="nav-text">방문통계</span>
         </a>
-        <a href="/admin/settings" class="nav-item">
+        <a href="/settings" class="nav-item">
           <span class="nav-icon">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="12" cy="12" r="3"/>
@@ -154,7 +154,7 @@
       <section class="recent-section">
         <div class="section-header">
           <h3 class="section-title">최근 접수 내역</h3>
-          <a href="/admin/leads" class="section-link">전체보기 →</a>
+          <a href="/leads" class="section-link">전체보기 →</a>
         </div>
         <div class="table-container">
           <table class="data-table">
@@ -183,7 +183,7 @@
       <section class="recent-section">
         <div class="section-header">
           <h3 class="section-title">최근 게시글</h3>
-          <a href="/admin/board" class="section-link">전체보기 →</a>
+          <a href="/board" class="section-link">전체보기 →</a>
         </div>
         <div class="table-container">
           <table class="data-table">
@@ -209,7 +209,7 @@
     </main>
   </div>
 
-  <script src="/admin/scripts/components.js"></script>
+  <script src="/scripts/components.js"></script>
   <script>
     // API 설정 (admin-auth.js에서 WORKER_URL 정의됨)
 

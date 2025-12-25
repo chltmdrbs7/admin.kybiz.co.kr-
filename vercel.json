@@ -1,0 +1,9 @@
+{
+  "rewrites": [
+    { "source": "/leads", "destination": "/leads.html" },
+    { "source": "/board", "destination": "/board.html" },
+    { "source": "/analytics", "destination": "/analytics.html" },
+    { "source": "/settings", "destination": "/settings.html" },
+    { "source": "/post-edit", "destination": "/post-edit.html" }
+  ]
+}

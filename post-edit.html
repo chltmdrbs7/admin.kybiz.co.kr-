@@ -502,6 +502,104 @@
             border-color: #EF4444;
         }
 
+        /* 썸네일 업로드 */
+        .thumbnail-upload-area {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .thumbnail-preview {
+            width: 100%;
+            height: 150px;
+            border: 2px dashed var(--border-color);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            overflow: hidden;
+            background: rgba(10, 22, 40, 0.4);
+        }
+
+        .thumbnail-preview:hover {
+            border-color: var(--primary);
+            background: rgba(30, 58, 95, 0.2);
+        }
+
+        .upload-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-secondary);
+        }
+
+        .upload-placeholder span {
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .upload-placeholder small {
+            font-size: 11px;
+            color: rgba(255,255,255,0.4);
+        }
+
+        .thumbnail-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .thumbnail-info {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            background: rgba(30, 58, 95, 0.3);
+            border-radius: 8px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .thumbnail-info .btn-remove {
+            background: rgba(220, 38, 38, 0.2);
+            border: 1px solid rgba(220, 38, 38, 0.5);
+            color: #f87171;
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .thumbnail-info .btn-remove:hover {
+            background: rgba(220, 38, 38, 0.4);
+        }
+
+        .compressing-indicator {
+            color: var(--primary-light);
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .compressing-indicator::before {
+            content: '';
+            width: 16px;
+            height: 16px;
+            border: 2px solid var(--primary);
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
         /* 반응형 */
         @media (max-width: 768px) {
             .editor-header {
@@ -580,8 +678,27 @@
                     </select>
                 </div>
                 <div class="form-row">
-                    <label class="form-label">썸네일 URL</label>
-                    <input type="text" id="post-thumbnail" class="form-input" placeholder="이미지 URL (선택사항)">
+                    <label class="form-label">썸네일 이미지</label>
+                    <div class="thumbnail-upload-area">
+                        <input type="file" id="thumbnail-file" accept="image/*" style="display:none" onchange="handleImageUpload(event)">
+                        <div class="thumbnail-preview" id="thumbnail-preview" onclick="document.getElementById('thumbnail-file').click()">
+                            <div class="upload-placeholder" id="upload-placeholder">
+                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                                    <circle cx="8.5" cy="8.5" r="1.5"/>
+                                    <polyline points="21 15 16 10 5 21"/>
+                                </svg>
+                                <span>클릭하여 이미지 업로드</span>
+                                <small>자동으로 100KB 이하 WebP로 압축됩니다</small>
+                            </div>
+                            <img id="preview-image" src="" alt="썸네일 미리보기" style="display:none">
+                        </div>
+                        <div class="thumbnail-info" id="thumbnail-info" style="display:none">
+                            <span id="file-size"></span>
+                            <button type="button" class="btn-remove" onclick="removeImage()">삭제</button>
+                        </div>
+                    </div>
+                    <input type="hidden" id="post-thumbnail" value="">
                 </div>
             </div>
         </div>
@@ -670,7 +787,7 @@
         // 게시글 로드 (수정 모드)
         async function loadPost(id) {
             try {
-                const response = await fetch(`${WORKER_URL}/board?id=${id}`);
+                const response = await fetch(`${WORKER_URL}/board/all`);
                 const result = await response.json();
 
                 if (result.success && result.posts) {
@@ -679,8 +796,16 @@
                         document.getElementById('post-title').value = post.제목 || '';
                         document.getElementById('post-summary').value = post.요약 || '';
                         document.getElementById('post-category').value = post.카테고리 || '정보';
-                        document.getElementById('post-thumbnail').value = post.썸네일 || '';
+                        document.getElementById('post-thumbnail').value = post.썸네일URL || '';
                         document.getElementById('content-editor').value = post.내용 || '';
+
+                        // 썸네일 이미지 미리보기 표시
+                        const thumbnailUrl = post.썸네일URL || '';
+                        if (thumbnailUrl) {
+                            showImagePreview(thumbnailUrl);
+                            document.getElementById('thumbnail-info').style.display = 'flex';
+                            document.getElementById('file-size').textContent = '기존 이미지';
+                        }
                     }
                 }
             } catch (error) {
@@ -872,8 +997,8 @@
             }
 
             try {
-                const url = isEditing ? `${WORKER_URL}/board?id=${editId}` : `${WORKER_URL}/board`;
-                const method = isEditing ? 'PUT' : 'POST';
+                const url = isEditing ? `${WORKER_URL}/board/${editId}` : `${WORKER_URL}/board`;
+                const method = isEditing ? 'PATCH' : 'POST';
 
                 const response = await fetch(url, {
                     method: method,
@@ -904,9 +1029,10 @@
                 제목: document.getElementById('post-title').value.trim(),
                 요약: document.getElementById('post-summary').value.trim(),
                 카테고리: document.getElementById('post-category').value,
-                썸네일: document.getElementById('post-thumbnail').value.trim(),
+                썸네일URL: document.getElementById('post-thumbnail').value.trim(),
                 내용: document.getElementById('content-editor').value,
-                작성일: new Date().toISOString().split('T')[0]
+                작성일: new Date().toISOString().split('T')[0],
+                게시여부: true
             };
         }
 
@@ -932,10 +1058,149 @@
                         document.getElementById('post-category').value = data.카테고리 || '정보';
                         document.getElementById('post-thumbnail').value = data.썸네일 || '';
                         document.getElementById('content-editor').value = data.내용 || '';
+                        // 썸네일 이미지 미리보기 복원
+                        if (data.썸네일) {
+                            showImagePreview(data.썸네일);
+                        }
                     }
                 }
             }
         });
+
+        // ================================================
+        // 이미지 업로드 및 WebP 압축 기능
+        // ================================================
+
+        // 이미지 업로드 핸들러
+        async function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // 이미지 타입 체크
+            if (!file.type.startsWith('image/')) {
+                showToast('이미지 파일만 업로드 가능합니다', 'error');
+                return;
+            }
+
+            // 압축 중 표시
+            const placeholder = document.getElementById('upload-placeholder');
+            placeholder.innerHTML = '<div class="compressing-indicator">이미지 압축 중...</div>';
+
+            try {
+                // 이미지를 100KB 이하 WebP로 압축
+                const compressedDataUrl = await compressImageToWebP(file, 100);
+
+                // 썸네일 필드에 data URL 저장
+                document.getElementById('post-thumbnail').value = compressedDataUrl;
+
+                // 미리보기 표시
+                showImagePreview(compressedDataUrl);
+
+                // 파일 크기 표시
+                const sizeKB = Math.round(compressedDataUrl.length * 0.75 / 1024);
+                document.getElementById('file-size').textContent = `WebP · ${sizeKB}KB`;
+                document.getElementById('thumbnail-info').style.display = 'flex';
+
+                showToast(`이미지 압축 완료 (${sizeKB}KB)`, 'success');
+            } catch (error) {
+                console.error('이미지 압축 실패:', error);
+                showToast('이미지 압축에 실패했습니다', 'error');
+                resetImageUpload();
+            }
+        }
+
+        // 이미지를 WebP로 압축 (목표 크기 이하까지)
+        async function compressImageToWebP(file, targetSizeKB) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.onload = function() {
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+
+                        // 최대 크기 제한 (가로 800px)
+                        let width = img.width;
+                        let height = img.height;
+                        const maxWidth = 800;
+
+                        if (width > maxWidth) {
+                            height = (height * maxWidth) / width;
+                            width = maxWidth;
+                        }
+
+                        canvas.width = width;
+                        canvas.height = height;
+                        ctx.drawImage(img, 0, 0, width, height);
+
+                        // 품질을 조절하며 목표 크기 이하로 압축
+                        let quality = 0.9;
+                        let dataUrl;
+
+                        do {
+                            dataUrl = canvas.toDataURL('image/webp', quality);
+                            const sizeKB = dataUrl.length * 0.75 / 1024;
+
+                            if (sizeKB <= targetSizeKB) {
+                                break;
+                            }
+
+                            quality -= 0.1;
+                        } while (quality > 0.1);
+
+                        // 최소 품질로도 목표 크기를 못 맞추면 크기 축소
+                        if (dataUrl.length * 0.75 / 1024 > targetSizeKB) {
+                            const scaleFactor = Math.sqrt(targetSizeKB / (dataUrl.length * 0.75 / 1024));
+                            canvas.width = width * scaleFactor;
+                            canvas.height = height * scaleFactor;
+                            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                            dataUrl = canvas.toDataURL('image/webp', 0.8);
+                        }
+
+                        resolve(dataUrl);
+                    };
+                    img.onerror = reject;
+                    img.src = e.target.result;
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // 이미지 미리보기 표시
+        function showImagePreview(dataUrl) {
+            const previewImg = document.getElementById('preview-image');
+            const placeholder = document.getElementById('upload-placeholder');
+
+            previewImg.src = dataUrl;
+            previewImg.style.display = 'block';
+            placeholder.style.display = 'none';
+        }
+
+        // 이미지 삭제
+        function removeImage() {
+            document.getElementById('post-thumbnail').value = '';
+            document.getElementById('thumbnail-file').value = '';
+            document.getElementById('preview-image').style.display = 'none';
+            document.getElementById('preview-image').src = '';
+            document.getElementById('thumbnail-info').style.display = 'none';
+            resetImageUpload();
+        }
+
+        // 업로드 영역 초기화
+        function resetImageUpload() {
+            const placeholder = document.getElementById('upload-placeholder');
+            placeholder.innerHTML = `
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                    <circle cx="8.5" cy="8.5" r="1.5"/>
+                    <polyline points="21 15 16 10 5 21"/>
+                </svg>
+                <span>클릭하여 이미지 업로드</span>
+                <small>자동으로 100KB 이하 WebP로 압축됩니다</small>
+            `;
+            placeholder.style.display = 'flex';
+        }
     </script>
 </body>
 </html>
